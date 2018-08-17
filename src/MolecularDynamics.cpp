@@ -18,13 +18,6 @@
 
 IMPHMC_BEGIN_NAMESPACE
 
-namespace {
-// Assuming score is in kcal/mol, its derivatives in kcal/mol/angstrom,
-// and mass is in g/mol, conversion factor necessary to get accelerations
-// in angstrom/fs/fs from raw derivatives
-static const double deriv_to_acceleration = -4.1868e-4;
-}
-
 MolecularDynamics::MolecularDynamics(Model *m)
     : atom::MolecularDynamics(m) {
   vnuis_ = FloatKey("vel");
@@ -80,7 +73,7 @@ void MolecularDynamics::propagate_coordinates(const ParticleIndexes &ps,
 
       // calculate velocity at t+(delta t/2) from that at t
       Float velocity = get_model()->get_attribute(vnuis_, ps[i]);
-      velocity += 0.5 * dcoord * deriv_to_acceleration * invmass * ts;
+      velocity -= 0.5 * dcoord * invmass * ts;
 
       cap_velocity_component(velocity);
       get_model()->set_attribute(vnuis_, ps[i], velocity);
@@ -97,7 +90,7 @@ void MolecularDynamics::propagate_coordinates(const ParticleIndexes &ps,
 
       // calculate velocity at t+(delta t/2) from that at t
       algebra::Vector3D velocity = v.get_velocity();
-      velocity += 0.5 * dcoord * deriv_to_acceleration * invmass * ts;
+      velocity -= 0.5 * dcoord * invmass * ts;
       for (unsigned j = 0; j < 3; ++j) {
         cap_velocity_component(velocity[j]);
       }
@@ -121,7 +114,7 @@ void MolecularDynamics::propagate_velocities(const ParticleIndexes &ps,
 
       // calculate velocity at t+(delta t) from that at t+(delta t/2)
       Float velocity = get_model()->get_attribute(vnuis_, ps[i]);
-      velocity += 0.5 * dcoord * deriv_to_acceleration * invmass * ts;
+      velocity -= 0.5 * dcoord * invmass * ts;
       get_model()->set_attribute(vnuis_, ps[i], velocity);
 
     } else {
@@ -130,17 +123,13 @@ void MolecularDynamics::propagate_velocities(const ParticleIndexes &ps,
       atom::LinearVelocity v(p);
       // calculate velocity at t+(delta t) from that at t+(delta t/2)
       algebra::Vector3D velocity = v.get_velocity();
-      velocity += 0.5 * dcoord * deriv_to_acceleration * invmass * ts;
+      velocity -= 0.5 * dcoord * invmass * ts;
       v.set_velocity(velocity);
     }
   }
 }
 
 Float MolecularDynamics::get_kinetic_energy() const {
-  // Conversion factor to get energy in kcal/mol from velocities in A/fs and
-  // mafs in g/mol
-  static const Float conversion = 1.0 / 4.1868e-4;
-
   Float ekinetic = 0.;
   ParticlesTemp ps = get_simulation_particles();
   for (ParticlesTemp::iterator iter = ps.begin(); iter != ps.end();
@@ -155,7 +144,7 @@ Float MolecularDynamics::get_kinetic_energy() const {
       ekinetic += mass * (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     }
   }
-  return 0.5 * ekinetic * conversion;
+  return 0.5 * ekinetic;
 }
 
 void MolecularDynamics::assign_velocities(Float temperature) {
@@ -163,7 +152,7 @@ void MolecularDynamics::assign_velocities(Float temperature) {
   setup_degrees_of_freedom(ips);
   ParticlesTemp ps = IMP::internal::get_particle(get_model(), ips);
 
-  boost::normal_distribution<Float> mrng(0., 1.);
+  boost::normal_distribution<Float> mrng(0., sqrt(temperature));
   boost::variate_generator<RandomNumberGenerator &,
                            boost::normal_distribution<Float> >
       sampler(random_number_generator, mrng);
@@ -176,25 +165,6 @@ void MolecularDynamics::assign_velocities(Float temperature) {
     } else {
       atom::LinearVelocity(p).set_velocity(algebra::Vector3D(sampler(),
                                                  sampler(), sampler()));
-    }
-  }
-
-  Float rescale =
-      sqrt(temperature / get_kinetic_temperature(get_kinetic_energy()));
-
-  for (ParticlesTemp::iterator iter = ps.begin(); iter != ps.end();
-       ++iter) {
-    Particle *p = *iter;
-    if (isd::Nuisance::get_is_setup(p)) {
-      Float velocity = p->get_value(vnuis_);
-      velocity *= rescale;
-      p->set_value(vnuis_, velocity);
-    } else {
-      atom::LinearVelocity v(p);
-
-      algebra::Vector3D velocity = v.get_velocity();
-      velocity *= rescale;
-      v.set_velocity(velocity);
     }
   }
 }

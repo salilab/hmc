@@ -45,9 +45,7 @@ void HamiltonianMonteCarlo::do_step() {
   persistence_counter_ += 1;
   if (persistence_counter_ == persistence_) {
     persistence_counter_ = 0;
-    // boltzmann constant in kcal/mol
-    static const double kB = 8.31441 / 4186.6;
-    md_->assign_velocities(get_kt() / kB);
+    md_->assign_velocities(get_kt());
   }
   ParticleIndexes unused;
   double last = do_evaluate(unused);

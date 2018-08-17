@@ -27,7 +27,7 @@ class IMPHMCEXPORT MolecularDynamics : public atom::MolecularDynamics {
   /** Score based on the provided model */
   MolecularDynamics(Model *m = nullptr);
 
-  //! Return the current kinetic energy of the system, in kcal/mol
+  //! Return the current kinetic energy of the system
   Float get_kinetic_energy() const;
 
   //! Assign velocities representative of the given temperature
