@@ -1,6 +1,7 @@
-//IMP_SWIG_OBJECT(IMP::example, ExampleRestraint, ExampleRestraints);
-//IMP_SWIG_DECORATOR(IMP::example, ExampleDecorator, ExampleDecorators);
-//IMP_SWIG_VALUE_TEMPLATE(IMP::example, ExampleTemplateClassD)
+IMP_SWIG_OBJECT(IMP::hmc, MolecularDynamics, MolecularDynamicss);
+IMP_SWIG_OBJECT(IMP::hmc, MolecularDynamicsMover, MolecularDynamicsMovers);
+IMP_SWIG_OBJECT(IMP::hmc, HybridMonteCarlo, HybridMonteCarlos);
 
-
-//%include "IMP/example/ExampleRestraint.h"
+%include "IMP/hmc/MolecularDynamics.h"
+%include "IMP/hmc/MolecularDynamicsMover.h"
+%include "IMP/hmc/HybridMonteCarlo.h"
