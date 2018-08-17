@@ -1,17 +1,17 @@
 /**
- *  \file HybridMonteCarlo.cpp
- *  \brief The hybrid monte carlo algorithm
+ *  \file HamiltonianMonteCarlo.cpp
+ *  \brief The Hamiltonian Monte Carlo algorithm
  *
  *  Copyright 2007-2018 IMP Inventors. All rights reserved.
  *
  */
 
-#include <IMP/hmc/HybridMonteCarlo.h>
+#include <IMP/hmc/HamiltonianMonteCarlo.h>
 
 IMPHMC_BEGIN_NAMESPACE
 
-HybridMonteCarlo::HybridMonteCarlo(Model *m, Float kT, unsigned steps,
-                                   Float timestep, unsigned persistence)
+HamiltonianMonteCarlo::HamiltonianMonteCarlo(
+  Model *m, Float kT, unsigned steps, Float timestep,unsigned persistence)
     : MonteCarlo(m) {
 
   mv_ = new MolecularDynamicsMover(m, steps, timestep);
@@ -25,7 +25,7 @@ HybridMonteCarlo::HybridMonteCarlo(Model *m, Float kT, unsigned steps,
   persistence_counter_ = 0;
 }
 
-double HybridMonteCarlo::do_evaluate(const ParticleIndexes &) const {
+double HamiltonianMonteCarlo::do_evaluate(const ParticleIndexes &) const {
   if (get_use_incremental_scoring_function())
     IMP_THROW("Incremental scoring not supported", ModelException);
   double ekin = md_->get_kinetic_energy();
@@ -33,7 +33,7 @@ double HybridMonteCarlo::do_evaluate(const ParticleIndexes &) const {
   return ekin + epot;
 }
 
-void HybridMonteCarlo::do_step() {
+void HamiltonianMonteCarlo::do_step() {
   // gibbs sampler on x and v
   // persistence=p : sample p times x and once v
   // However because it's constant E, a rejected move
@@ -70,45 +70,47 @@ void HybridMonteCarlo::do_step() {
       <<std::endl;*/
 }
 
-Float HybridMonteCarlo::get_kinetic_energy() const {
+Float HamiltonianMonteCarlo::get_kinetic_energy() const {
   return md_->get_kinetic_energy();
 }
 
-Float HybridMonteCarlo::get_potential_energy() const {
+Float HamiltonianMonteCarlo::get_potential_energy() const {
   return get_scoring_function()->evaluate(false);
 }
 
-Float HybridMonteCarlo::get_total_energy() const {
+Float HamiltonianMonteCarlo::get_total_energy() const {
   return get_kinetic_energy() + get_potential_energy();
 }
 
 // set md timestep
-void HybridMonteCarlo::set_timestep(Float ts) {
+void HamiltonianMonteCarlo::set_timestep(Float ts) {
   md_->set_maximum_time_step(ts);
 }
 
-double HybridMonteCarlo::get_timestep() const {
+double HamiltonianMonteCarlo::get_timestep() const {
   return md_->get_maximum_time_step();
 }
 
 // set number of md steps per mc step
-void HybridMonteCarlo::set_number_of_md_steps(unsigned nsteps) {
+void HamiltonianMonteCarlo::set_number_of_md_steps(unsigned nsteps) {
   mv_->set_number_of_md_steps(nsteps);
 }
 
-unsigned HybridMonteCarlo::get_number_of_md_steps() const {
+unsigned HamiltonianMonteCarlo::get_number_of_md_steps() const {
   return mv_->get_number_of_md_steps();
 }
 
 // set how many mc steps happen until you redraw the momenta
-void HybridMonteCarlo::set_persistence(unsigned persistence) {
+void HamiltonianMonteCarlo::set_persistence(unsigned persistence) {
   persistence_ = persistence;
 }
 
-unsigned HybridMonteCarlo::get_persistence() const { return persistence_; }
+unsigned HamiltonianMonteCarlo::get_persistence() const {
+  return persistence_;
+}
 
 // return pointer to hmc::MolecularDynamics instance
 // useful if you want to set other stuff that is not exposed here
-MolecularDynamics *HybridMonteCarlo::get_md() const { return md_; }
+MolecularDynamics *HamiltonianMonteCarlo::get_md() const { return md_; }
 
 IMPHMC_END_NAMESPACE

@@ -1,13 +1,13 @@
 /**
- *  \file IMP/hmc/HybridMonteCarlo.h
- *  \brief A hybrid monte carlo implementation
+ *  \file IMP/hmc/HamiltonianMonteCarlo.h
+ *  \brief A Hamiltonian Monte Carlo implementation
  *
  *  Copyright 2007-2018 IMP Inventors. All rights reserved.
  *
  */
 
-#ifndef IMPHMC_HYBRID_MONTE_CARLO_H
-#define IMPHMC_HYBRID_MONTE_CARLO_H
+#ifndef IMPHMC_HAMILTONIAN_MONTE_CARLO_H
+#define IMPHMC_HAMILTONIAN_MONTE_CARLO_H
 
 #include <IMP/hmc/hmc_config.h>
 #include <IMP/core/MonteCarlo.h>
@@ -17,14 +17,14 @@
 
 IMPHMC_BEGIN_NAMESPACE
 
-//! Hybrid Monte Carlo optimizer
+//! Hamiltonian Monte Carlo optimizer
 // moves all xyz particles having a fixed mass with an MD proposal
 
-class IMPHMCEXPORT HybridMonteCarlo : public core::MonteCarlo {
+class IMPHMCEXPORT HamiltonianMonteCarlo : public core::MonteCarlo {
 
  public:
-  HybridMonteCarlo(Model *m, Float kT = 1.0, unsigned steps = 100,
-                   Float timestep = 1.0, unsigned persistence = 1);
+  HamiltonianMonteCarlo(Model *m, Float kT = 1.0, unsigned steps = 100,
+                        Float timestep = 1.0, unsigned persistence = 1);
 
   Float get_kinetic_energy() const;
 
@@ -52,7 +52,7 @@ class IMPHMCEXPORT HybridMonteCarlo : public core::MonteCarlo {
   double do_evaluate(const ParticleIndexes &) const;
 
   virtual void do_step();
-  IMP_OBJECT_METHODS(HybridMonteCarlo);
+  IMP_OBJECT_METHODS(HamiltonianMonteCarlo);
 
  private:
   unsigned num_md_steps_, persistence_;
@@ -63,4 +63,4 @@ class IMPHMCEXPORT HybridMonteCarlo : public core::MonteCarlo {
 
 IMPHMC_END_NAMESPACE
 
-#endif /* IMPHMC_HYBRID_MONTE_CARLO_H */
+#endif /* IMPHMC_HAMILTONIAN_MONTE_CARLO_H */

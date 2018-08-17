@@ -1,7 +1,7 @@
 IMP_SWIG_OBJECT(IMP::hmc, MolecularDynamics, MolecularDynamicss);
 IMP_SWIG_OBJECT(IMP::hmc, MolecularDynamicsMover, MolecularDynamicsMovers);
-IMP_SWIG_OBJECT(IMP::hmc, HybridMonteCarlo, HybridMonteCarlos);
+IMP_SWIG_OBJECT(IMP::hmc, HamiltonianMonteCarlo, HamiltonianMonteCarlos);
 
 %include "IMP/hmc/MolecularDynamics.h"
 %include "IMP/hmc/MolecularDynamicsMover.h"
-%include "IMP/hmc/HybridMonteCarlo.h"
+%include "IMP/hmc/HamiltonianMonteCarlo.h"
