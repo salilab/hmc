@@ -110,6 +110,10 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
             self.hamiltonian.hamiltonian, self.sampler, self.phasepoint
         )
 
+        self.interface.set_values(
+            HMCUtilities.constrain(self.transformation, self.phasepoint.θ)
+        )
+
         stats = Main.pairs(stats)
         stats.pop("is_accept")
         try:
@@ -128,7 +132,4 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
                 self.samples.add_sample(self.interface.get_values())
 
     def after_sample(self):
-        self.interface.set_values(
-            HMCUtilities.constrain(self.transformation, self.phasepoint.θ)
-        )
         self.get_model().update()
