@@ -59,7 +59,7 @@ class OptimizedVariables(object):
                 IMP.core.Direction.get_direction_key(1),
                 IMP.core.Direction.get_direction_key(2),
             ),
-            lambda m, pi: HMCUtilities.DirectionConstraint(4),
+            lambda m, pi: HMCUtilities.UnitVectorConstraint(3),
         ),
         # nuisance
         (
