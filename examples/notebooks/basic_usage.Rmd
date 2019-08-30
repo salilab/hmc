@@ -1,0 +1,525 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.0'
+      jupytext_version: 1.0.5
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+# Basic Usage of Dynamic HMC in IMP
+
+## Introduction
+
+Like most implementations of dynamic/adaptive Hamiltonian Monte Carlo (HMC),
+IMP's is designed to be run for a warm-up period in which the step size and
+metric are adapted in an automated fashion, followed by a sampling period.
+Consequently, for most applications, the user will only need one function:
+`IMP.hmc.defaults.setup_warmup_run_hmc`. For all of the options, consult the
+source code. This notebook demonstrates how one would apply the HMC sampler on
+several trivial sampling problems, analyze the output with
+[ArviZ](https://arviz-devs.github.io/arviz), and compare with the usual Random
+Walk Monte Carlo (RWMC) approach with Gibbs samplers typically used in IMP.
+
+## Set-up and Imports
+
+```{python}
+import numpy as np
+
+import IMP
+import IMP.core
+import IMP.isd
+import IMP.hmc
+from IMP.hmc.defaults import setup_warmup_run_hmc
+from IMP.hmc.diagnostics import get_inference_data
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import arviz as az # arviz *must* be imported after IMP.hmc (for now)
+az.style.use(['default', 'arviz-colors'])
+```
+
+```{python}
+def setup_nvariate_normal(
+    m, N=1, mu=0.0, sigma=1.0, lb=-np.inf, ub=np.inf, make_movers=False
+):
+    rs = []
+    ps = []
+
+    try:
+        list(mu)
+    except TypeError:
+        mu = [mu] * N
+
+    try:
+        list(sigma)
+    except TypeError:
+        sigma = [sigma] * N
+
+    movers = []
+
+    for n in range(N):
+        p = IMP.isd.Nuisance.setup_particle(IMP.Particle(m))
+        p.set_nuisance_is_optimized(True)
+        p.set_lower(lb)
+        p.set_upper(ub)
+        p.set_name("x{}".format(n))
+        ps.append(p)
+
+        r = IMP.isd.GaussianRestraint(p.get_particle(), mu[n], sigma[n])
+        rs.append(r)
+
+        if make_movers:
+            mvr = IMP.core.NormalMover(
+                m, p.get_particle_index(), [p.get_nuisance_key()], 1.0
+            )
+            movers.append(mvr)
+
+    rs = IMP.RestraintSet(rs, 1.0)
+    sf = IMP.core.RestraintsScoringFunction(rs)
+
+    if make_movers:
+        return ps, sf, movers
+
+    return ps, sf
+
+ess_cols = ["ess_mean", "ess_sd", "ess_bulk", "ess_tail"]
+```
+
+## $N$-variate Normal
+
+### 1D normal
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+ps, sf, movers = setup_nvariate_normal(m, N=1, make_movers=True)
+for p in ps:
+    p.set_nuisance(np.random.normal())
+hmc = setup_warmup_run_hmc(sf, metric='unit', nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc)
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+```{python}
+az.plot_energy(hmc_dataset, kind="hist");
+az.plot_posterior(hmc_dataset, kind="hist");
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers(movers)
+for mover in movers:
+    mover.set_sigma(5)
+for p in ps:
+    p.set_nuisance(np.random.normal())
+
+mc.optimize(nsteps * 0.5 / len(movers))
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(nsteps / len(movers))
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(
+        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
+    )
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+ess_ratios = hmc_summary[ess_cols] / rwmc_summary[ess_cols]
+ess_ratios.columns = [c + "_ratio" for c in ess_cols]
+ess_ratios
+```
+
+### 10D Normal
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+ps, sf, movers = setup_nvariate_normal(m, N=10, make_movers=True)
+for p in ps:
+    p.set_nuisance(np.random.normal())
+hmc = setup_warmup_run_hmc(sf, metric='diag', nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc)
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+```{python}
+az.plot_energy(hmc_dataset, kind="hist");
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers(movers)
+for mover in movers:
+    mover.set_sigma(.78)
+for p in ps:
+    p.set_nuisance(np.random.normal())
+
+mc.optimize(int(nsteps * 0.5 / len(movers)))
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(int(nsteps / len(movers)))
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(
+        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
+    )
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+ess_ratios = hmc_summary[ess_cols] / rwmc_summary[ess_cols]
+ess_ratios.columns = [c + "_ratio" for c in ess_cols]
+ess_ratios
+```
+
+### 100D Gaussian
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+ps, sf, movers = setup_nvariate_normal(m, N=100, make_movers=True)
+for p in ps:
+    p.set_nuisance(np.random.normal())
+hmc = setup_warmup_run_hmc(sf, metric='diag', nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc)
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers(movers)
+for mover in movers:
+    mover.set_sigma(.23)
+for p in ps:
+    p.set_nuisance(np.random.normal())
+
+mc.optimize(int(nsteps * 0.5 / len(movers)))
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(int(nsteps / len(movers)))
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(
+        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
+    )
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+ess_ratios = hmc_summary[ess_cols] / rwmc_summary[ess_cols]
+ess_ratios.columns = [c + "_ratio" for c in ess_cols]
+ess_ratios
+```
+
+## Constrained variables
+
+### $x \sim \operatorname{Half-Normal}(0, 1)$
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+ps, sf, movers = setup_nvariate_normal(m, N=1, lb=0, make_movers=True)
+for p in ps:
+    p.set_nuisance(np.exp(np.random.normal()))
+hmc = setup_warmup_run_hmc(sf, metric='unit', nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc)
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+```{python}
+az.plot_energy(hmc_dataset, kind="hist");
+az.plot_posterior(hmc_dataset, kind="hist");
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers(movers)
+for mover in movers:
+    mover.set_sigma(2)
+for p in ps:
+    p.set_nuisance(np.exp(np.random.normal()))
+
+mc.optimize(nsteps * 0.5 / len(movers))
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(int(nsteps / len(movers)))
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(
+        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
+    )
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+az.plot_posterior(rwmc_dataset, kind="hist")
+```
+
+In this example, we can see how IMP's constraint handling creates an invalid
+Markov transition when the posterior is defined at the constraint value. Any
+proposal that falls outside of the constraint is thresholded to the nearest
+bound. If the scoring function is defined at that bound then the entirety of
+the transition distributions mass outside the bound is placed at the bound,
+and it will be accepted at a higher rate than it ought to be.
+
+### $x \sim \operatorname{Truncated-Normal}(0, 1)$, $-1 < x < 1$
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+ps, sf, movers = setup_nvariate_normal(m, N=1, lb=-2, ub=2, make_movers=True)
+for p in ps:
+    p.set_nuisance(np.tanh(np.random.normal() / 2))
+hmc = setup_warmup_run_hmc(sf, metric='diag', nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc)
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+```{python}
+az.plot_energy(hmc_dataset, kind="hist");
+az.plot_posterior(hmc_dataset, kind="hist");
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers(movers)
+for mover in movers:
+    mover.set_sigma(2)
+for p in ps:
+    p.set_nuisance(np.tanh(np.random.normal() / 2))
+
+mc.optimize(int(nsteps * 0.5 / len(movers)))
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(nsteps / len(movers))
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(
+        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
+    )
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+az.plot_posterior(rwmc_dataset, kind="hist");
+```
+
+### $x \sim \operatorname{vMF}(50)$, $x \in S^2$
+
+Here $x$ is a 3D unit vector, an element of the 2-sphere, distributed
+according to the von Mises-Fisher distribution with concentration of 50.
+
+#### Restraint and Setup
+
+```{python}
+class vonMisesFisherRestraint(IMP.Restraint):
+    def __init__(self, x, mu, kappa):
+        self.x = IMP.core.Direction(x)
+        super().__init__(self.x.get_model(), "vonMisesFisherRestraint%1%")
+        self.kappa = kappa
+        self.mu = mu
+        self.km = kappa * np.array(mu, dtype=np.double)
+
+    def do_add_score_and_derivatives(self, sa):
+        score = -self.km.dot(self.x.get_direction())
+        if sa.get_derivative_accumulator():
+            self.x.add_to_direction_derivatives(
+                -self.km, sa.get_derivative_accumulator()
+            )
+        sa.add_score(score)
+
+    def do_get_inputs(self):
+        return [self.x.get_particle()]
+
+
+def setup_S2_vMF(
+    m, mu=np.array([0.0, 0.0, 1.0]), kappa=10.0, make_mover=False
+):
+    rs = []
+
+    p = IMP.core.Direction.setup_particle(
+        IMP.Particle(m), IMP.algebra.get_random_vector_on_unit_sphere()
+    )
+    p.set_direction_is_optimized(True)
+    p.set_name("x")
+
+    r = vonMisesFisherRestraint(p, mu, kappa)
+    rs.append(r)
+
+    rs = IMP.RestraintSet(rs, 1.0)
+    sf = IMP.core.RestraintsScoringFunction(rs)
+
+    if make_mover:
+        mvr = IMP.core.DirectionMover(p, 1.0, 0.0)
+        return p, sf, mvr
+
+    return p, sf
+```
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+p, sf, mover = setup_S2_vMF(m, kappa=50, make_mover=True)
+p.set_direction(IMP.algebra.get_random_vector_on_unit_sphere())
+
+hmc = setup_warmup_run_hmc(
+    sf, metric="diag", adapt_delta=0.9, nadapt=1000, nsample=2000
+)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc, varnames=["x", "y", "z"])
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+```{python}
+az.plot_energy(hmc_dataset, kind="hist");
+az.plot_posterior(hmc_dataset, kind="hist");
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(
+    hmc_dataset.posterior.x,
+    hmc_dataset.posterior.y,
+    hmc_dataset.posterior.z,
+    alpha=0.1
+);
+plt.show()
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers([mover])
+mover.set_maximum_rotation(0.9)
+p.set_direction(IMP.algebra.get_random_vector_on_unit_sphere())
+
+mc.optimize(nsteps)
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(nsteps)
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(
+        zip('xyz', map(np.array, zip(*os.get_values())))
+    )
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+az.plot_posterior(rwmc_dataset, kind="hist");
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(
+    rwmc_dataset.posterior.x,
+    rwmc_dataset.posterior.y,
+    rwmc_dataset.posterior.z,
+    alpha=0.01
+)
+plt.show()
+```
+
+```{python}
+ess_ratios = hmc_summary[ess_cols] / rwmc_summary[ess_cols]
+ess_ratios.columns = [c + "_ratio" for c in ess_cols]
+ess_ratios
+```
