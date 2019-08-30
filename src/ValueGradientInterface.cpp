@@ -25,20 +25,20 @@ IMP::FloatKeys ValueGradientInterface::get_float_keys() const { return fks_; }
 
 IMP::ParticleIndexes ValueGradientInterface::get_particle_indexes() const { return pis_; }
 
-IMP::Vector<double> ValueGradientInterface::get_values() const {
+std::vector<double> ValueGradientInterface::get_values() const {
   for (unsigned int i = 0; i < get_dimension(); ++i)
     x_[i] = get_model()->get_attribute(fks_[i], pis_[i]);
   return x_;
 }
 
-void ValueGradientInterface::set_values(const IMP::Vector<double> &x) {
+void ValueGradientInterface::set_values(const std::vector<double> &x) {
   IMP_USAGE_CHECK(x.size() == x_.size(),
                   "Position vector must be same length as particle indexes.");
   for (unsigned int i = 0; i < get_dimension(); ++i)
     get_model()->set_attribute(fks_[i], pis_[i], x[i]);
 }
 
-IMP::Vector<double> ValueGradientInterface::get_gradient() const {
+std::vector<double> ValueGradientInterface::get_gradient() const {
   for (unsigned int i = 0; i < get_dimension(); ++i)
     gradx_[i] = get_model()->get_derivative(fks_[i], pis_[i]);
   return gradx_;

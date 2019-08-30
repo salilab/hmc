@@ -45,14 +45,14 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
         self.stats = None
         self.save_samples = save_samples
         self.samples = None
+    def get_save_samples(self):
 
     def init_step_size(self):
         print("Initializing step size")
+        x = np.asarray(self.interface.get_values(), dtype=np.double)
         return AdvancedHMC.find_good_eps(
             self.hamiltonian.hamiltonian,
-            HMCUtilities.free(
-                self.transformation, self.interface.get_values()
-            ),
+            HMCUtilities.free(self.transformation, x),
         )
 
     def create_integrator(self):
@@ -70,11 +70,10 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
             raise ValueError("'hmc_type' must be in {'dynamic', 'static'}")
 
     def create_phasepoint(self):
+        x = np.asarray(self.interface.get_values(), dtype=np.double)
         self.phasepoint = HMCUtilities.make_phasepoint(
             self.hamiltonian.hamiltonian,
-            HMCUtilities.free(
-                self.transformation, self.interface.get_values()
-            ),
+            HMCUtilities.free(self.transformation, x),
         )
 
     def do_get_inputs(self):
