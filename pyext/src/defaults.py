@@ -15,7 +15,7 @@ def setup_warmup_hmc(
     log_freq=0.1,
     verbose=True,
     shuffle=False,
-    shuffle_sigma=1
+    shuffle_sigma=1,
 ):
     m = sf.get_model()
     hmc_vars = OptimizedVariables(m)
@@ -38,7 +38,7 @@ def setup_warmup_hmc(
         adaptor = Adaptor(hmc, nadapt=nadapt, adapt_delta=adapt_delta)
         adaptor.adapt(log_freq=log_freq, verbose=verbose)
         adapt_stats = hmc.stats
-        adapt_samples = hmc.samples
+        adapt_samples = hmc.sample_saver.get_values()
         hmc.stats = None
         hmc.samples = None
         return hmc, adapt_stats, adapt_samples

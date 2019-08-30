@@ -1,10 +1,11 @@
 IMP_SWIG_OBJECT(IMP::hmc, MolecularDynamics, MolecularDynamicss);
 IMP_SWIG_OBJECT(IMP::hmc, MolecularDynamicsMover, MolecularDynamicsMovers);
 IMP_SWIG_OBJECT(IMP::hmc, HamiltonianMonteCarlo, HamiltonianMonteCarlos);
-
 IMP_SWIG_OBJECT(IMP::hmc, ValueGradientInterface, ValueGradientInterfaces);
+IMP_SWIG_OBJECT(IMP::hmc, SaveAttributesOptimizerState, SaveAttributesOptimizerStates);
 
 %include "IMP/hmc/MolecularDynamics.h"
 %include "IMP/hmc/MolecularDynamicsMover.h"
 %include "IMP/hmc/HamiltonianMonteCarlo.h"
 %include "IMP/hmc/ValueGradientInterface.h"
+%include "IMP/hmc/SaveAttributesOptimizerState.h"

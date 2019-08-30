@@ -1,4 +1,5 @@
 import IMP
+import numpy as np
 
 from .hamiltonian import Hamiltonian
 from .accumulator import SampleAccumulator, StatisticsAccumulator
@@ -43,9 +44,19 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
         self.max_depth = max_depth
         self.create_phasepoint()
         self.stats = None
-        self.save_samples = save_samples
-        self.samples = None
+        self.sample_saver = IMP.hmc.SaveAttributesOptimizerState(self.interface)
+        self.set_save_samples(save_samples)
+
     def get_save_samples(self):
+        return self._save_samples
+
+    def set_save_samples(self, tf):
+        self.remove_optimizer_state(self.sample_saver)
+        if tf:
+            self._save_samples = True
+            self.add_optimizer_state(self.sample_saver)
+        else:
+            self._save_samples = False
 
     def init_step_size(self):
         print("Initializing step size")
@@ -83,15 +94,20 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
         ]
 
     def do_optimize(self, ns):
-        self.before_sample()
+        self.before_optimize()
         for n in range(ns):
+            self.before_sample()
             self.sample()
-        self.after_sample()
+            self.after_sample()
+        self.after_optimize()
         return self.get_scoring_function().get_last_score()
 
-    def before_sample(self):
+    def before_optimize(self):
         self.get_scoring_function().evaluate(True)
         self.create_phasepoint()
+
+    def after_optimize(self):
+        self.get_model().update()
 
     def is_adapting(self):
         return self.adaptor is not None or self.adaptor.is_adapting()
@@ -109,10 +125,6 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
             self.hamiltonian.hamiltonian, self.sampler, self.phasepoint
         )
 
-        self.interface.set_values(
-            HMCUtilities.constrain(self.transformation, self.phasepoint.θ)
-        )
-
         stats = Main.pairs(stats)
         stats.pop("is_accept")
         try:
@@ -122,13 +134,13 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
             self.stats = StatisticsAccumulator(stats_keys)
             self.stats.add_sample(stats)
 
-        if self.save_samples:
-            try:
-                self.samples.add_sample(self.interface.get_values())
-            except AttributeError:
-                varnames = self.opt_vars.get_names()
-                self.samples = SampleAccumulator(varnames)
-                self.samples.add_sample(self.interface.get_values())
+    def before_sample(self):
+        pass
 
     def after_sample(self):
-        self.get_model().update()
+        self.interface.set_values(
+            HMCUtilities.constrain(self.transformation, self.phasepoint.θ)
+        )
+        if self.get_has_optimizer_states():
+            self.get_model().update()
+            self.update_states()
