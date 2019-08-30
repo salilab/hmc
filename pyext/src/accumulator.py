@@ -41,22 +41,28 @@ class StatisticsAccumulator(SampleAccumulator):
         self.means = np.zeros_like(self.means)
         self.current = {}
 
-    def log_current(self, prefix="     "):
+    def log_current(self, title="HMC statistics:", prefix="    ", prec=3):
         print(
-            "\n".join(
-                [
-                    "{0}{1}: {2}".format(prefix, k, v)
-                    for k, v in self.current.items()
-                ]
+            "{0}\n{1}".format(
+                title,
+                "\n".join(
+                    [
+                        "{0}{1}: {2:.{3}g}".format(prefix, k, v, prec)
+                        for k, v in self.current.items()
+                    ]
+                ),
             )
         )
 
-    def log_mean(self, prefix="     "):
+    def log_mean(self, title="Mean HMC statistics:", prefix="    ", prec=3):
         print(
-            "\n".join(
-                [
-                    "{0}{1}: {2}".format(prefix, k, v)
-                    for k, v in zip(self.keys, self.means)
-                ]
+            "{0}\n{1}".format(
+                title,
+                "\n".join(
+                    [
+                        "{0}{1}: {2:.{3}g}".format(prefix, k, v, prec)
+                        for k, v in zip(self.keys, self.means)
+                    ]
+                ),
             )
         )

@@ -39,8 +39,10 @@ class Adaptor(object):
         )
         self.nadapt_counter += 1
 
-    def adapt(self, update_states=False, log_freq=0.01, verbose=True):
-        print("Warming up HMC for {} steps.".format(self.nadapt))
+    def adapt(
+        self, update_states=False, log_freq=0.01, log_prec=3, verbose=True
+    ):
+        print("Warming up HMC for {0} steps.".format(self.nadapt))
 
         try:
             self.hmc.stats.clear()
@@ -73,11 +75,15 @@ class Adaptor(object):
                 per_eval = lap / nevals
                 eta = lap * (self.nadapt / (self.nadapt_counter + 1) - 1)
                 print(
-                    "Warmup step {}/{} ({:.3g}s/eval  ETA: {:.3g}s)".format(
-                        self.nadapt_counter + 1, self.nadapt, per_eval, eta
+                    "Warmup step {0}/{1} ({2:.{4}g}s/eval  ETA: {3:.{4}g}s)".format(
+                        self.nadapt_counter + 1,
+                        self.nadapt,
+                        per_eval,
+                        eta,
+                        log_prec,
                     )
                 )
-                self.hmc.stats.log_current()
+                self.hmc.stats.log_mean()
 
         self.hmc.after_sample()
 
@@ -87,14 +93,13 @@ class Adaptor(object):
         lap = timer() - start
         per_eval = lap / nevals
         print(
-            "Finished warmup after {:.3g}s ({:.3g}s/eval)".format(
-                lap, per_eval
+            "Finished warmup after {0:.{2}g}s ({1:.{2}g}s/eval)".format(
+                lap, per_eval, log_prec
             )
         )
         print(
-            "{} divergent transitions were encountered during warm-up ({:.3f}%)".format(
-                ndivergent, 100 * ndivergent / self.nadapt
+            "{0} divergent transitions were encountered during warm-up ({1:.{2}%}%)".format(
+                ndivergent, ndivergent / self.nadapt, log_prec
             )
         )
-        print("Mean statistics:")
-        self.hmc.stats.log_mean()
+        self.hmc.stats.log_mean(title="Mean warm-up statistics:")
