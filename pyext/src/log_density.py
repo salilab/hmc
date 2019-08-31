@@ -42,10 +42,13 @@ class TransformedLogDensity(LogDensityBase):
         self.logpdf = logpdf
         self.transform = transform
 
-        # FIXME: This seems dangerous. Maybe use hash for a unique name
-        Main.jc = self.transform
+        # Use hash for unique name
+        jcname = "Main.jc{}".format(self.__hash__())
+        exec("{0} = self.transform".format(jcname))
         self.constrain_with_pushlogpdf = Main.eval(
-            "PyCall.pyfunction(y->HMCUtilities.constrain_with_pushlogpdf(jc, y), Vector{Float64})"
+            "PyCall.pyfunction(y->HMCUtilities.constrain_with_pushlogpdf({0}, y), Vector{{Float64}})".format(
+                jcname
+            )
         )
 
     def get_dimension(self):
