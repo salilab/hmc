@@ -1,6 +1,6 @@
 from timeit import default_timer as timer
 
-from .julia import AdvancedHMC
+from .julia import HMCUtilities, AdvancedHMC
 
 
 class Adaptor(object):
@@ -31,7 +31,7 @@ class Adaptor(object):
     def adapt_step(self):
         AdvancedHMC.adapt_b(
             self.adaptor,
-            self.hmc.phasepoint.θ,
+            HMCUtilities.position(self.hmc.phasepoint),
             self.hmc.stats.current["accept_stat"],
         )
         self.hmc.hamiltonian.hamiltonian, self.hmc.sampler = AdvancedHMC.update(

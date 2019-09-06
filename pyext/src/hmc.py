@@ -139,7 +139,10 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
 
     def after_sample(self):
         self.interface.set_values(
-            HMCUtilities.constrain(self.transformation, self.phasepoint.θ)
+            HMCUtilities.constrain(
+                self.transformation,
+                HMCUtilities.position(self.phasepoint)
+            )
         )
         if self.get_has_optimizer_states():
             self.get_model().update()
