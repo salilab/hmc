@@ -2,8 +2,9 @@ import numpy as np
 import arviz as az
 
 
-def get_inference_data(*hmcs, varnames=None):
+def get_inference_data(*hmcs, **kwargs):
     """Build an Arviz `InferenceData` instance from 1 or more chains."""
+    varnames = kwargs.get("varnames", None)
     if varnames is None:
         varnames = hmcs[0].opt_vars.get_names()
 
