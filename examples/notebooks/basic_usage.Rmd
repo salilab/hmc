@@ -128,11 +128,11 @@ for mover in movers:
 for p in ps:
     p.set_nuisance(np.random.normal())
 
-mc.optimize(nsteps * 0.5 / len(movers))
+mc.optimize(int(nsteps * 0.5 / len(movers)))
 mc.reset_statistics()
 os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
 mc.add_optimizer_state(os)
-mc.optimize(nsteps / len(movers))
+mc.optimize(int(nsteps / len(movers)))
 print(
     "Acceptance rate: {0:.3g}".format(
         mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
@@ -304,7 +304,7 @@ for mover in movers:
 for p in ps:
     p.set_nuisance(np.exp(np.random.normal()))
 
-mc.optimize(nsteps * 0.5 / len(movers))
+mc.optimize(int(nsteps * 0.5 / len(movers)))
 mc.reset_statistics()
 os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
 mc.add_optimizer_state(os)
@@ -373,7 +373,7 @@ mc.optimize(int(nsteps * 0.5 / len(movers)))
 mc.reset_statistics()
 os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
 mc.add_optimizer_state(os)
-mc.optimize(nsteps / len(movers))
+mc.optimize(int(nsteps / len(movers)))
 print(
     "Acceptance rate: {0:.3g}".format(
         mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
