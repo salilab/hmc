@@ -13,7 +13,7 @@
 #include <IMP/Particle.h>
 #include <IMP/ModelObject.h>
 #include <IMP/Model.h>
-#include <IMP/types.h>
+#include <IMP/Vector.h>
 
 IMPHMC_BEGIN_NAMESPACE
 
@@ -22,8 +22,8 @@ class IMPHMCEXPORT ValueGradientInterface : public IMP::ModelObject {
   private:
     IMP::FloatKeys fks_;
     IMP::ParticleIndexes pis_;
-    mutable std::vector<double> x_;
-    mutable std::vector<double> gradx_;
+    mutable IMP::Vector<double> x_;
+    mutable IMP::Vector<double> gradx_;
 
   public:
     ValueGradientInterface(IMP::Model* m,
@@ -37,11 +37,11 @@ class IMPHMCEXPORT ValueGradientInterface : public IMP::ModelObject {
 
     IMP::ParticleIndexes get_particle_indexes() const;
 
-    std::vector<double> get_values() const;
+    IMP::Vector<double> get_values() const;
 
-    void set_values(const std::vector<double> &x);
+    void set_values(const IMP::Vector<double> &x);
 
-    std::vector<double> get_gradient() const;
+    IMP::Vector<double> get_gradient() const;
 
     virtual IMP::ModelObjectsTemp do_get_inputs() const IMP_OVERRIDE;
 
