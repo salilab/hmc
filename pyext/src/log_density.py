@@ -50,6 +50,11 @@ class TransformedLogDensity(LogDensityBase):
                 jcname
             )
         )
+        self.constrain_with_pushlogpdf_grad = Main.eval(
+            "PyCall.pyfunction(y->HMCUtilities.constrain_with_pushlogpdf_grad({0}, y), Vector{{Float64}})".format(
+                jcname
+            )
+        )
 
     def get_dimension(self):
         return HMCUtilities.free_dimension(self.transform)
@@ -60,6 +65,6 @@ class TransformedLogDensity(LogDensityBase):
         return pushlogpdf(logpdf_x)
 
     def get_logpdf_with_gradient(self, y):
-        x, pushlogpdf = self.constrain_with_pushlogpdf(y)
+        x, pushlogpdf_grad = self.constrain_with_pushlogpdf_grad(y)
         logpdf_x, gradx_logpdf_x = self.logpdf.get_logpdf_with_gradient(x)
-        return pushlogpdf(logpdf_x, gradx_logpdf_x)
+        return pushlogpdf_grad(logpdf_x, gradx_logpdf_x)
