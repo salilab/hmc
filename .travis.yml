@@ -23,7 +23,7 @@ before_script: # Set up unique dependencies
   - python -c 'import julia; julia.install()'
   - julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
   - python -c 'import julia.HMCUtilities'
-  - pip install arviz
+  - if test "${TRAVIS_PYTHON_VERSION}" != "2.7" ; pip install arviz; fi
 script:
   - mkdir build
   - cd build
