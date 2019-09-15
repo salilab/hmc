@@ -7,67 +7,108 @@ import IMP.hmc
 from .julia import HMCUtilities
 
 
-def _get_nuis_bounds(m, pi):
-    n = IMP.isd.Nuisance(m, pi)
-    return n.get_lower(), n.get_upper()
+class TransformationBuilder(object):
+
+    """
+    Check if variables are set up and create the necessary transformations.
+    """
+
+    def build(self, m, pi):
+        """Build the transformation.
+
+        If the transformation applies, return a list of
+        `(FloatKey, ParticleIndex)` tuples for optimized attributes to which
+        the transformation is applied, and an `HMCUtilities.VariableConstraint`
+        transformation object.
+        """
+        raise NotImplementedError
+
+
+class UnconstrainedTransformationBuilder(TransformationBuilder):
+    def __init__(self, fks):
+        self.fks = fks
+
+    def build(self, m, pi):
+        p = m.get_particle(pi)
+        kp_pairs = []
+        for fk in self.fks:
+            if m.get_has_attribute(fk, pi) and p.get_is_optimized(fk):
+                kp_pairs.append((fk, pi))
+        n = len(kp_pairs)
+        if n > 0:
+            return kp_pairs, HMCUtilities.IdentityConstraint(n)
+        else:
+            return
+
+
+class UnitVectorTransformationBuilder(TransformationBuilder):
+    def __init__(self, fks):
+        self.fks = fks
+
+    def build(self, m, pi):
+        p = m.get_particle(pi)
+        kp_pairs = []
+        for fk in self.fks:
+            if not (m.get_has_attribute(fk, pi) and p.get_is_optimized(fk)):
+                return
+            kp_pairs.append((fk, pi))
+        n = len(kp_pairs)
+        return kp_pairs, HMCUtilities.UnitVectorConstraint(n)
+
+
+class RadiusTransformationBuilder(TransformationBuilder):
+    def build(self, m, pi):
+        p = m.get_particle(pi)
+        fk = IMP.core.XYZR.get_radius_key()
+        if not (m.get_has_attribute(fk, pi) and p.get_is_optimized(fk)):
+            return
+        return [(fk, pi)], HMCUtilities.LowerBoundedConstraint(0.0)
+
+
+class NuisanceTransformationBuilder(TransformationBuilder):
+    def build(self, m, pi):
+        p = m.get_particle(pi)
+        fk = IMP.isd.Nuisance.get_nuisance_key()
+        if not (m.get_has_attribute(fk, pi) and p.get_is_optimized(fk)):
+            return
+        n = IMP.isd.Nuisance(m, pi)
+        return (
+            [(fk, pi)],
+            HMCUtilities.TransformConstraint(n.get_lower(), n.get_upper()),
+        )
 
 
 class OptimizedVariables(object):
-    key_constraints = [
-        # sphere (coords/radius)
-        (
-            (
-                IMP.core.XYZ.get_xyz_keys()[0],
-                IMP.core.XYZ.get_xyz_keys()[1],
-                IMP.core.XYZ.get_xyz_keys()[2],
-            ),
-            lambda m, pi: HMCUtilities.IdentityConstraint(3),
+
+    transform_builders = [
+        UnconstrainedTransformationBuilder(
+            # XYZ/RigidBody coordinates
+            list(IMP.core.XYZ.get_xyz_keys())
+            # NonRigidMember local coordinates
+            + [IMP.FloatKey(4), IMP.FloatKey(5), IMP.FloatKey(6)]
         ),
-        # local coordinates
-        (
-            (IMP.FloatKey(4), IMP.FloatKey(5), IMP.FloatKey(6)),
-            lambda m, pi: HMCUtilities.IdentityConstraint(3),
+        # XYZR radius
+        RadiusTransformationBuilder(),
+        # RigidBody quaternion
+        UnitVectorTransformationBuilder(
+            [
+                IMP.FloatKey("rigid_body_quaternion_{0}".format(i))
+                for i in range(4)
+            ]
         ),
-        (
-            (IMP.core.XYZR.get_radius_key(),),
-            lambda m, pi: HMCUtilities.LowerBoundedConstraint(0.0),
+        # NonRigidMember local quaternion
+        UnitVectorTransformationBuilder(
+            [
+                IMP.FloatKey("rigid_body_local_quaternion_{0}".format(i))
+                for i in range(4)
+            ]
         ),
-        # rigid body quaternion
-        (
-            (
-                IMP.FloatKey("rigid_body_quaternion_0"),
-                IMP.FloatKey("rigid_body_quaternion_1"),
-                IMP.FloatKey("rigid_body_quaternion_2"),
-                IMP.FloatKey("rigid_body_quaternion_3"),
-            ),
-            lambda m, pi: HMCUtilities.UnitVectorConstraint(4),
+        # Direction
+        UnitVectorTransformationBuilder(
+            [IMP.core.Direction.get_direction_key(i) for i in range(3)]
         ),
-        # local rigid body quaternion
-        (
-            (
-                IMP.FloatKey("rigid_body_local_quaternion_0"),
-                IMP.FloatKey("rigid_body_local_quaternion_1"),
-                IMP.FloatKey("rigid_body_local_quaternion_2"),
-                IMP.FloatKey("rigid_body_local_quaternion_3"),
-            ),
-            lambda m, pi: HMCUtilities.UnitVectorConstraint(4),
-        ),
-        # direction
-        (
-            (
-                IMP.core.Direction.get_direction_key(0),
-                IMP.core.Direction.get_direction_key(1),
-                IMP.core.Direction.get_direction_key(2),
-            ),
-            lambda m, pi: HMCUtilities.UnitVectorConstraint(3),
-        ),
-        # nuisance
-        (
-            (IMP.isd.Nuisance.get_nuisance_key(),),
-            lambda m, pi: HMCUtilities.TransformConstraint(
-                *_get_nuis_bounds(m, pi)
-            ),
-        ),
+        # Nuisance
+        NuisanceTransformationBuilder(),
     ]
 
     def __init__(self, m):
@@ -81,16 +122,15 @@ class OptimizedVariables(object):
         self.optimized_key_index_pairs.clear()
         constraints = []
         pis = self.m.get_particle_indexes()
-        ps = [self.m.get_particle(pi) for pi in pis]
-        for fks, f in self.key_constraints:
-            for p in ps:
-                if all(p.get_is_optimized(fk) for fk in fks):
-                    c = f(self.m, p.get_index())
-                    constraints.append(c)
-                    for fk in fks:
-                        self.optimized_key_index_pairs.append(
-                            (fk, p.get_index())
-                        )
+        for tb in self.transform_builders:
+            for pi in pis:
+                result = tb.build(self.m, pi)
+                if result is None:
+                    continue
+                kp_pairs, c = result
+                self.optimized_key_index_pairs.extend(kp_pairs)
+                constraints.append(c)
+
         self.joint_constraint = HMCUtilities.JointConstraint(*constraints)
         self.interface = IMP.hmc.ValueGradientInterface(
             self.m, *list(zip(*self.optimized_key_index_pairs))[:2]
