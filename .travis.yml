@@ -22,7 +22,7 @@ before_script: # Set up unique dependencies
   - pip install julia
   - python -c 'import julia; julia.install()'
   - julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
-  - python -c 'import julia; import.julia.HMCUtilities'
+  - python -c 'import julia.HMCUtilities'
   - pip install arviz
 script:
   - mkdir build
