@@ -37,11 +37,17 @@ import IMP.isd
 import IMP.hmc
 from IMP.hmc.defaults import setup_warmup_run_hmc
 from IMP.hmc.diagnostics import get_inference_data
+from IMP.hmc.julia import set_julia_seed
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import arviz as az # arviz *must* be imported after IMP.hmc (for now)
 az.style.use(['default', 'arviz-colors'])
+
+# Set random seeds
+IMP.random_number_generator.seed(1608637542)
+set_julia_seed(3421126067)
+np.random.seed(4083286876)
 ```
 
 ```{python}
