@@ -25,7 +25,7 @@ julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtil
 3. Install the Python/Julia interface with
 
 ```bash
-$ pip install pyjulia
+$ pip install julia
 $ python
 >>> import julia
 >>> julia.install()
