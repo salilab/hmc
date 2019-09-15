@@ -8,12 +8,12 @@
 *.gcda
 test/CMakeLists.txt
 src/CMakeLists.txt
-CMakeLists.txt
 CMakeModules/
 benchmark/CMakeLists.txt
 bin/CMakeLists.txt
 dependency/CMakeLists.txt
 examples/CMakeLists.txt
 pyext/CMakeLists.txt
+utility/CMakeLists.txt
 ModuleBuild.cmake
 Files.cmake
