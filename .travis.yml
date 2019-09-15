@@ -19,6 +19,7 @@ install:
 before_script: # Set up unique dependencies
   - echo ./tools/install-julia.sh "$JULIA_VERSION"
   - ./tools/install-julia.sh "$JULIA_VERSION"
+  - export PATH=$(pwd)/julia-*/bin:$PATH
   - pip install julia
   - python -c 'import julia; julia.install()'
   - julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
