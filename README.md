@@ -1,5 +1,9 @@
 \brief Hamiltonian Monte Carlo for Integrative Modeling
 
+[![Build Status](https://travis-ci.org/salilab/hmc.svg?branch=master)](https://travis-ci.org/salilab/hmc)
+[![codecov](https://codecov.io/gh/salilab/hmc/branch/master/graph/badge.svg)](https://codecov.io/gh/salilab/hmc)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bcced071b3f541449d723a774ea09026)](https://www.codacy.com/app/salilab/hmc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=salilab/hmc&amp;utm_campaign=Badge_Grade)
+
 This module provides functionality for using Dynamic/Adaptive Hamiltonian
 Monte Carlo (HMC) to sample IMP Models. This interface is experimental and
 can change at any time.
