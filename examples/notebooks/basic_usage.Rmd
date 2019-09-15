@@ -41,8 +41,9 @@ from IMP.hmc.julia import set_julia_seed
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import arviz as az # arviz *must* be imported after IMP.hmc (for now)
-az.style.use(['default', 'arviz-colors'])
+import arviz as az  # arviz *must* be imported after IMP.hmc (for now)
+
+az.style.use(["default", "arviz-colors"])
 
 # Set random seeds
 IMP.random_number_generator.seed(1608637542)
@@ -94,6 +95,7 @@ def setup_nvariate_normal(
 
     return ps, sf
 
+
 ess_cols = ["ess_mean", "ess_sd", "ess_bulk", "ess_tail"]
 ```
 
@@ -108,8 +110,8 @@ m = IMP.Model()
 ps, sf, movers = setup_nvariate_normal(m, N=1, make_movers=True)
 for p in ps:
     p.set_nuisance(np.random.normal())
-hmc = setup_warmup_run_hmc(sf, metric='unit', nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+hmc = setup_warmup_run_hmc(sf, metric="unit", nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -118,8 +120,8 @@ hmc_summary
 ```
 
 ```{python}
-az.plot_energy(hmc_dataset, kind="hist");
-az.plot_posterior(hmc_dataset, kind="hist");
+az.plot_energy(hmc_dataset, kind="hist")
+az.plot_posterior(hmc_dataset, kind="hist")
 ```
 
 #### RWMC
@@ -145,9 +147,7 @@ print(
     )
 )
 rwmc_dataset = az.from_dict(
-    posterior=dict(
-        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
-    )
+    posterior=dict(zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values()))))
 )
 rwmc_summary = az.summary(rwmc_dataset)
 rwmc_summary
@@ -168,8 +168,8 @@ m = IMP.Model()
 ps, sf, movers = setup_nvariate_normal(m, N=10, make_movers=True)
 for p in ps:
     p.set_nuisance(np.random.normal())
-hmc = setup_warmup_run_hmc(sf, metric='diag', nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -178,7 +178,7 @@ hmc_summary
 ```
 
 ```{python}
-az.plot_energy(hmc_dataset, kind="hist");
+az.plot_energy(hmc_dataset, kind="hist")
 ```
 
 #### RWMC
@@ -189,7 +189,7 @@ mc.set_return_best(False)
 mc.set_scoring_function(sf)
 mc.add_movers(movers)
 for mover in movers:
-    mover.set_sigma(.78)
+    mover.set_sigma(0.78)
 for p in ps:
     p.set_nuisance(np.random.normal())
 
@@ -204,9 +204,7 @@ print(
     )
 )
 rwmc_dataset = az.from_dict(
-    posterior=dict(
-        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
-    )
+    posterior=dict(zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values()))))
 )
 rwmc_summary = az.summary(rwmc_dataset)
 rwmc_summary
@@ -227,8 +225,8 @@ m = IMP.Model()
 ps, sf, movers = setup_nvariate_normal(m, N=100, make_movers=True)
 for p in ps:
     p.set_nuisance(np.random.normal())
-hmc = setup_warmup_run_hmc(sf, metric='diag', nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -244,7 +242,7 @@ mc.set_return_best(False)
 mc.set_scoring_function(sf)
 mc.add_movers(movers)
 for mover in movers:
-    mover.set_sigma(.23)
+    mover.set_sigma(0.23)
 for p in ps:
     p.set_nuisance(np.random.normal())
 
@@ -259,9 +257,7 @@ print(
     )
 )
 rwmc_dataset = az.from_dict(
-    posterior=dict(
-        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
-    )
+    posterior=dict(zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values()))))
 )
 rwmc_summary = az.summary(rwmc_dataset)
 rwmc_summary
@@ -284,8 +280,8 @@ m = IMP.Model()
 ps, sf, movers = setup_nvariate_normal(m, N=1, lb=0, make_movers=True)
 for p in ps:
     p.set_nuisance(np.exp(np.random.normal()))
-hmc = setup_warmup_run_hmc(sf, metric='unit', nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+hmc = setup_warmup_run_hmc(sf, metric="unit", nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -294,8 +290,8 @@ hmc_summary
 ```
 
 ```{python}
-az.plot_energy(hmc_dataset, kind="hist");
-az.plot_posterior(hmc_dataset, kind="hist");
+az.plot_energy(hmc_dataset, kind="hist")
+az.plot_posterior(hmc_dataset, kind="hist")
 ```
 
 #### RWMC
@@ -321,9 +317,7 @@ print(
     )
 )
 rwmc_dataset = az.from_dict(
-    posterior=dict(
-        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
-    )
+    posterior=dict(zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values()))))
 )
 rwmc_summary = az.summary(rwmc_dataset)
 rwmc_summary
@@ -349,8 +343,8 @@ m = IMP.Model()
 ps, sf, movers = setup_nvariate_normal(m, N=1, lb=-2, ub=2, make_movers=True)
 for p in ps:
     p.set_nuisance(np.tanh(np.random.normal() / 2))
-hmc = setup_warmup_run_hmc(sf, metric='diag', nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples('n_leapfrog').sum()
+hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -359,8 +353,8 @@ hmc_summary
 ```
 
 ```{python}
-az.plot_energy(hmc_dataset, kind="hist");
-az.plot_posterior(hmc_dataset, kind="hist");
+az.plot_energy(hmc_dataset, kind="hist")
+az.plot_posterior(hmc_dataset, kind="hist")
 ```
 
 #### RWMC
@@ -386,16 +380,14 @@ print(
     )
 )
 rwmc_dataset = az.from_dict(
-    posterior=dict(
-        zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values())))
-    )
+    posterior=dict(zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values()))))
 )
 rwmc_summary = az.summary(rwmc_dataset)
 rwmc_summary
 ```
 
 ```{python}
-az.plot_posterior(rwmc_dataset, kind="hist");
+az.plot_posterior(rwmc_dataset, kind="hist")
 ```
 
 ### $x \sim \operatorname{vMF}(50)$, $x \in S^2$
@@ -426,9 +418,7 @@ class vonMisesFisherRestraint(IMP.Restraint):
         return [self.x.get_particle()]
 
 
-def setup_S2_vMF(
-    m, mu=np.array([0.0, 0.0, 1.0]), kappa=10.0, make_mover=False
-):
+def setup_S2_vMF(m, mu=np.array([0.0, 0.0, 1.0]), kappa=10.0, make_mover=False):
     rs = []
 
     p = IMP.core.Direction.setup_particle(
@@ -469,16 +459,13 @@ hmc_summary
 ```
 
 ```{python}
-az.plot_energy(hmc_dataset, kind="hist");
-az.plot_posterior(hmc_dataset, kind="hist");
+az.plot_energy(hmc_dataset, kind="hist")
+az.plot_posterior(hmc_dataset, kind="hist")
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111, projection="3d")
 ax.scatter(
-    hmc_dataset.posterior.x,
-    hmc_dataset.posterior.y,
-    hmc_dataset.posterior.z,
-    alpha=0.1
-);
+    hmc_dataset.posterior.x, hmc_dataset.posterior.y, hmc_dataset.posterior.z, alpha=0.1
+)
 plt.show()
 ```
 
@@ -503,23 +490,21 @@ print(
     )
 )
 rwmc_dataset = az.from_dict(
-    posterior=dict(
-        zip('xyz', map(np.array, zip(*os.get_values())))
-    )
+    posterior=dict(zip("xyz", map(np.array, zip(*os.get_values()))))
 )
 rwmc_summary = az.summary(rwmc_dataset)
 rwmc_summary
 ```
 
 ```{python}
-az.plot_posterior(rwmc_dataset, kind="hist");
+az.plot_posterior(rwmc_dataset, kind="hist")
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111, projection="3d")
 ax.scatter(
     rwmc_dataset.posterior.x,
     rwmc_dataset.posterior.y,
     rwmc_dataset.posterior.z,
-    alpha=0.01
+    alpha=0.01,
 )
 plt.show()
 ```
