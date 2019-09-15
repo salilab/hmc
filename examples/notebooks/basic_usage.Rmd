@@ -41,6 +41,7 @@ from IMP.hmc.julia import set_julia_seed
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import arviz as az  # arviz *must* be imported after IMP.hmc (for now)
 
 az.style.use(["default", "arviz-colors"])
@@ -504,8 +505,152 @@ ax.scatter(
     rwmc_dataset.posterior.x,
     rwmc_dataset.posterior.y,
     rwmc_dataset.posterior.z,
-    alpha=0.01,
+    alpha=0.1,
 )
+plt.show()
+```
+
+```{python}
+ess_ratios = hmc_summary[ess_cols] / rwmc_summary[ess_cols]
+ess_ratios.columns = [c + "_ratio" for c in ess_cols]
+ess_ratios
+```
+
+### $x \sim \operatorname{Dir}(\alpha)$, $x \in \Delta^2$, $\alpha=(4,8,16)^\top$
+
+Here $x$ is a 3D point on the 2-simplex $\Delta^2$, the manifold of vectors with
+positive elements that sum to 1. IMP's `IMP.isd.Weight` decorator represents
+such simplices. Elements of $\Delta^2$ lie on an equiliteral triangular subset
+of a plane. See https://en.wikipedia.org/wiki/Simplex for more details. Here, we
+choose a Dirichlet prior with concentrations $\alpha=(4,8,16)^\top$. For
+reference, $\alpha=(1,1,1)^\top$ is the uniform distribution on $\Delta^2$.
+
+#### Restraint and Setup
+
+```{python}
+class DirichletRestraint(IMP.Restraint):
+    def __init__(self, x, alpha):
+        self.x = IMP.isd.Weight(x)
+        super().__init__(self.x.get_model(), "DirichletRestraint%1%")
+        self.alpha = np.array(alpha, dtype=np.double)
+        self.beta = self.alpha - 1
+
+    def do_add_score_and_derivatives(self, sa):
+        w = np.array(self.x.get_weights(), dtype=np.double)
+        score = -np.dot(self.beta, np.log(w))
+        if sa.get_derivative_accumulator():
+            self.x.add_to_weights_derivatives(
+                -self.beta / w, sa.get_derivative_accumulator()
+            )
+        sa.add_score(score)
+
+    def do_get_inputs(self):
+        return [self.x.get_particle()]
+
+
+def get_random_weights(n):
+    w = -np.log(np.random.uniform(size=n))
+    return w / np.sum(w)
+
+
+def setup_weight_dirichlet(m, alpha=np.ones(3), make_mover=False):
+    rs = []
+
+    n = len(alpha)
+    w0 = get_random_weights(n)
+
+    p = IMP.isd.Weight.setup_particle(IMP.Particle(m), w0)
+    p.set_weights_are_optimized(True)
+    p.set_name("x")
+
+    r = DirichletRestraint(p, alpha)
+    rs.append(r)
+
+    rs = IMP.RestraintSet(rs, 1.0)
+    sf = IMP.core.RestraintsScoringFunction(rs)
+
+    if make_mover:
+        mvr = IMP.isd.WeightMover(p.get_particle(), 1.0)
+        return p, sf, mvr
+
+    return p, sf
+```
+
+#### HMC
+
+```{python}
+m = IMP.Model()
+p, sf, mover = setup_weight_dirichlet(m, alpha=[4, 8, 16], make_mover=True)
+p.set_weights(get_random_weights(3))
+
+hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
+nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+print("{0} scoring evaluations computed during sampling".format(nsteps))
+
+hmc_dataset = get_inference_data(hmc)
+hmc_summary = az.summary(hmc_dataset)
+hmc_summary
+```
+
+```{python}
+az.plot_energy(hmc_dataset, kind="hist")
+az.plot_posterior(hmc_dataset, kind="hist")
+fig = plt.figure()
+ax = fig.add_subplot(111, projection="3d")
+ax.scatter(
+    hmc_dataset.posterior.x_weight0,
+    hmc_dataset.posterior.x_weight1,
+    hmc_dataset.posterior.x_weight2,
+    alpha=0.1,
+)
+ax.add_collection3d(
+    Line3DCollection([list(np.eye(3)) + [[1, 0, 0]]], color="k", alpha=1)
+)  # Plot simplex
+ax.view_init(elev=45, azim=45)
+plt.show()
+```
+
+#### RWMC
+
+```{python}
+mc = IMP.core.MonteCarlo(m)
+mc.set_return_best(False)
+mc.set_scoring_function(sf)
+mc.add_movers([mover])
+mover.set_radius(0.4)
+p.set_weights(get_random_weights(3))
+
+mc.optimize(nsteps)
+mc.reset_statistics()
+os = IMP.hmc.SaveAttributesOptimizerState(hmc.interface)
+mc.add_optimizer_state(os)
+mc.optimize(nsteps)
+print(
+    "Acceptance rate: {0:.3g}".format(
+        mc.get_number_of_accepted_steps() / mc.get_number_of_proposed_steps()
+    )
+)
+rwmc_dataset = az.from_dict(
+    posterior=dict(zip(hmc.opt_vars.get_names(), map(np.array, zip(*os.get_values()))))
+)
+rwmc_summary = az.summary(rwmc_dataset)
+rwmc_summary
+```
+
+```{python}
+az.plot_posterior(rwmc_dataset, kind="hist")
+fig = plt.figure()
+ax = fig.add_subplot(111, projection="3d")
+ax.scatter(
+    rwmc_dataset.posterior.x_weight0,
+    rwmc_dataset.posterior.x_weight1,
+    rwmc_dataset.posterior.x_weight2,
+    alpha=0.1,
+)
+ax.add_collection3d(
+    Line3DCollection([list(np.eye(3)) + [[1, 0, 0]]], color="k", alpha=1)
+)  # Plot simplex
+ax.view_init(elev=45, azim=45)
 plt.show()
 ```
 
