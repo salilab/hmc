@@ -14,3 +14,8 @@ import julia.HMCUtilities.AdvancedHMC
 from julia.HMCUtilities import AdvancedHMC
 
 Main.eval("using HMCUtilities")
+
+
+def set_julia_seed(seed):
+    import julia.Random
+    julia.Random.seed_b(seed)
