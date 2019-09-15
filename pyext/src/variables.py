@@ -56,6 +56,18 @@ class UnitVectorTransformationBuilder(TransformationBuilder):
         return kp_pairs, HMCUtilities.UnitVectorConstraint(n)
 
 
+class WeightTransformationBuilder(TransformationBuilder):
+    def build(self, m, pi):
+        if not IMP.isd.Weight.get_is_setup(m, pi):
+            return
+        w = IMP.isd.Weight(m, pi)
+        if not w.get_weights_are_optimized():
+            return
+        kp_pairs = [(fk, pi) for fk in w.get_weight_keys()]
+        n = len(kp_pairs)
+        return kp_pairs, HMCUtilities.UnitSimplexConstraint(n)
+
+
 class RadiusTransformationBuilder(TransformationBuilder):
     def build(self, m, pi):
         p = m.get_particle(pi)
@@ -109,6 +121,7 @@ class OptimizedVariables(object):
         ),
         # Nuisance
         NuisanceTransformationBuilder(),
+        WeightTransformationBuilder(),
     ]
 
     def __init__(self, m):
