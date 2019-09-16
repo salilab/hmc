@@ -17,7 +17,7 @@ the following steps to install `IMP.hmc`'s dependencies:
 
 2. Install the Python/Julia interface with
 
-```bash
+```console
 $ pip install julia
 $ python -c 'import julia; julia.install()'
 ```
@@ -25,8 +25,8 @@ $ python -c 'import julia; julia.install()'
 3. Install the [HMCUtilities.jl](https://github.com/salilab/HMCUtilities.jl)
 package from the command line with
 
-```bash
-julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
+```console
+$ julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
 ```
 
 Then install this module using the
