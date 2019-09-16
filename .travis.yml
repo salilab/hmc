@@ -23,7 +23,7 @@ before_script: # Set up unique dependencies
   - pip install julia
   - python -c 'import julia; julia.install()'
   - julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
-  - python -c 'import julia.HMCUtilities'
+  - python-jl -c 'import julia.HMCUtilities'
   - if test "${TRAVIS_PYTHON_VERSION}" != "2.7" ; then pip install arviz; fi
 script:
   - mkdir build
@@ -31,6 +31,6 @@ script:
   - if test "${TRAVIS_PYTHON_VERSION}" = "2.7" ; then PY2=on; else PY2=off; fi
   - cmake .. -DIMP_DIR=${CONDA_PREFIX}/lib/cmake/IMP -DUSE_PYTHON2=${PY2} -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"
   - make
-  - ./setup_environment.sh ../test/nosetests --with-coverage --cover-branches -e 'probabilistic' ../test/test_*.py ../test/medium_test_*.py test/*/*.py > /dev/null
+  - ./setup_environment.sh python-jl ../test/nosetests --with-coverage --cover-branches -e 'probabilistic' ../test/test_*.py ../test/medium_test_*.py test/*/*.py > /dev/null
 after_script:
   - bash <(curl -s https://codecov.io/bash)
