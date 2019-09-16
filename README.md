@@ -15,23 +15,25 @@ the following steps to install `IMP.hmc`'s dependencies:
 
 1. Install [Julia](https://julialang.org/downloads/)
 
-2. Install the [HMCUtilities.jl](https://github.com/salilab/HMCUtilities.jl)
+2. Install the Python/Julia interface with
+
+```bash
+$ pip install julia
+$ python -c 'import julia; julia.install()'
+```
+
+3. Install the [HMCUtilities.jl](https://github.com/salilab/HMCUtilities.jl)
 package from the command line with
 
 ```bash
 julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
 ```
 
-3. Install the Python/Julia interface with
+Then install this module using the
+[standard approach](https://integrativemodeling.org/nightly/doc/manual/outoftree.html).
 
-```bash
-$ pip install julia
-$ python
->>> import julia
->>> julia.install()
-```
-
-Then install this module using the standard approach.
+For [some configurations](https://pyjulia.readthedocs.io/en/latest/troubleshooting.html),
+you may need to use `python-jl` instead of `python`. The usage is identical.
 
 ## Examples
 
