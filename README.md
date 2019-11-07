@@ -26,7 +26,7 @@ $ python -c 'import julia; julia.install()'
 package from the command line with
 
 ```console
-$ julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl"))'
+$ julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/salilab/HMCUtilities.jl", rev="v0.2.0"))'
 ```
 
 Then install this module using the
