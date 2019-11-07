@@ -112,7 +112,7 @@ ps, sf, movers = setup_nvariate_normal(m, N=1, make_movers=True)
 for p in ps:
     p.set_nuisance(np.random.normal())
 hmc = setup_warmup_run_hmc(sf, metric="unit", nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -170,7 +170,7 @@ ps, sf, movers = setup_nvariate_normal(m, N=10, make_movers=True)
 for p in ps:
     p.set_nuisance(np.random.normal())
 hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -227,7 +227,7 @@ ps, sf, movers = setup_nvariate_normal(m, N=100, make_movers=True)
 for p in ps:
     p.set_nuisance(np.random.normal())
 hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -282,7 +282,7 @@ ps, sf, movers = setup_nvariate_normal(m, N=1, lb=0, make_movers=True)
 for p in ps:
     p.set_nuisance(np.exp(np.random.normal()))
 hmc = setup_warmup_run_hmc(sf, metric="unit", nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -345,7 +345,7 @@ ps, sf, movers = setup_nvariate_normal(m, N=1, lb=-2, ub=2, make_movers=True)
 for p in ps:
     p.set_nuisance(np.tanh(np.random.normal() / 2))
 hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)
@@ -451,7 +451,7 @@ p.set_direction(IMP.algebra.get_random_vector_on_unit_sphere())
 hmc = setup_warmup_run_hmc(
     sf, metric="diag", adapt_delta=0.9, nadapt=1000, nsample=2000
 )
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc, varnames=["x", "y", "z"])
@@ -584,7 +584,7 @@ p, sf, mover = setup_weight_dirichlet(m, alpha=[4, 8, 16], make_mover=True)
 p.set_weights(get_random_weights(3))
 
 hmc = setup_warmup_run_hmc(sf, metric="diag", nadapt=1000, nsample=2000)
-nsteps = hmc.stats.get_samples("n_leapfrog").sum()
+nsteps = hmc.stats.get_samples("tree_size").sum()
 print("{0} scoring evaluations computed during sampling".format(nsteps))
 
 hmc_dataset = get_inference_data(hmc)

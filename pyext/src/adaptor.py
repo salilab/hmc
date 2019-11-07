@@ -32,7 +32,7 @@ class Adaptor(object):
         AdvancedHMC.adapt_b(
             self.adaptor,
             HMCUtilities.position(self.hmc.phasepoint),
-            self.hmc.stats.current["accept_stat"],
+            self.hmc.stats.current["mean_tree_accept"],
         )
         self.hmc.hamiltonian.hamiltonian, self.hmc.sampler = AdvancedHMC.update(
             self.hmc.hamiltonian.hamiltonian, self.hmc.sampler, self.adaptor
@@ -69,7 +69,7 @@ class Adaptor(object):
             self.hmc.sample()
             self.adapt_step()
             ndivergent += self.hmc.is_diverging
-            nevals += self.hmc.stats.current["n_leapfrog"]
+            nevals += self.hmc.stats.current["tree_size"]
             if verbose and (self.nadapt_counter + 1) % log_interval == 0:
                 lap = timer() - start
                 per_eval = lap / nevals

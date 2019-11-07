@@ -10,12 +10,14 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
 
     _stats_key_map = {
         "log_density": "lp",
-        "acceptance_rate": "accept_stat",
-        "step_size": "stepsize",
-        "tree_depth": "treedepth",
-        "n_steps": "n_leapfrog",
-        "numerical_error": "diverging",
+        "is_adapt": "tune",
         "hamiltonian_energy": "energy",
+        "hamiltonian_energy_error": "energy_error",
+        "max_hamiltonian_energy_error": "max_energy_error",
+        "numerical_error": "diverging",
+        "acceptance_rate": "mean_tree_accept",
+        "n_steps": "tree_size",
+        "tree_depth": "depth"
     }
 
     def __init__(
@@ -128,11 +130,10 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
         )
 
         stats = Main.pairs(stats)
-        stats.pop("is_accept")
         try:
             self.stats.add_sample(stats)
         except AttributeError:
-            stats_keys = [self._stats_key_map[k] for k in stats.keys()]
+            stats_keys = [self._stats_key_map.get(k, k) for k in stats.keys()]
             self.stats = StatisticsAccumulator(stats_keys)
             self.stats.add_sample(stats)
 
