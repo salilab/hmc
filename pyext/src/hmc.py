@@ -74,7 +74,7 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
     def create_sampler(self, hmc_type="dynamic", max_depth=10):
         if hmc_type == "dynamic":
             self.sampler = Main.eval(
-                "AdvancedHMC.NUTS{AdvancedHMC.Multinomial,AdvancedHMC.GeneralisedNoUTurn}"
+                "AdvancedHMC.NUTS{AdvancedHMC.MultinomialTS,AdvancedHMC.GeneralisedNoUTurn}"
             )(self.integrator, max_depth)
         elif hmc_type == "static":
             self.sampler = AdvancedHMC.StaticTrajectory(self.integrator)
