@@ -43,7 +43,7 @@ See [`examples/notebooks`](examples/notebooks) for example usage.
 
 _Author(s)_: Seth Axen
 
-_Maintainer_: `sdaxen`
+_Maintainer_: `sethaxen`
 
 _License_: [LGPL](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
 This library is free software; you can redistribute it and/or
