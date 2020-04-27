@@ -53,12 +53,14 @@ class HamiltonianMonteCarlo(IMP.Optimizer):
         return self._save_samples
 
     def set_save_samples(self, tf):
-        self.remove_optimizer_state(self.sample_saver)
         if tf:
             self._save_samples = True
             self.add_optimizer_state(self.sample_saver)
         else:
             self._save_samples = False
+            oss = self.get_optimizer_states()
+            if self.sample_saver in oss:
+                self.remove_optimizer_state(self.sample_saver)
 
     def init_step_size(self):
         print("Initializing step size")
