@@ -74,8 +74,10 @@ def setup_nvariate_normal(
     for n in range(N):
         p = IMP.isd.Nuisance.setup_particle(IMP.Particle(m))
         p.set_nuisance_is_optimized(True)
-        p.set_lower(lb)
-        p.set_upper(ub)
+        if not np.isinf(lb):
+            p.set_lower(lb)
+        if not np.isinf(ub):
+            p.set_upper(ub)
         p.set_name("x{}".format(n))
         ps.append(p)
 
