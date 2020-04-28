@@ -12,10 +12,7 @@ class Adaptor(object):
     def __init__(self, hmc, nadapt=2000, adapt_delta=0.8):
         self.hmc = hmc
         self.create_adaptor(nadapt, adapt_delta=adapt_delta)
-
-    @property
-    def nadapt(self):
-        return self.adaptor.n_adapts
+        self.nadapt = nadapt
 
     def is_adapting(self):
         return self.nadapt_counter < self.nadapt
@@ -34,9 +31,10 @@ class Adaptor(object):
             HMCUtilities.position(self.hmc.phasepoint),
             self.hmc.stats.current["mean_tree_accept"],
         )
-        self.hmc.hamiltonian.hamiltonian, self.hmc.sampler = AdvancedHMC.update(
-            self.hmc.hamiltonian.hamiltonian, self.hmc.sampler, self.adaptor
+        self.hmc.hamiltonian.hamiltonian = AdvancedHMC.reconstruct(
+            self.hmc.hamiltonian.hamiltonian, self.adaptor
         )
+        self.hmc.sampler = AdvancedHMC.reconstruct(self.hmc.sampler, self.adaptor)
         self.nadapt_counter += 1
 
     def adapt(
