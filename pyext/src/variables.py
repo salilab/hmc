@@ -56,6 +56,41 @@ class UnitVectorTransformationBuilder(TransformationBuilder):
         return kp_pairs, HMCUtilities.UnitVectorConstraint(n)
 
 
+class UnitVectorScaledTransformationBuilder(TransformationBuilder):
+    def __init__(self, fks):
+        self.fks = fks
+
+    def compute_scaling(self, m, pi):
+        if self.fks[0] in (
+            IMP.FloatKey("rigid_body_quaternion_0"),
+            IMP.FloatKey("rigid_body_local_quaternion_0")
+        ): # rigid body
+            rb = IMP.core.RigidBody(m, pi)
+            center = rb.get_coordinates()
+            vs = np.array([list(IMP.core.XYZ(p).get_coordinates() - center) for p in rb.get_rigid_members()])
+            sigma = np.std(vs, ddof = 0)
+            # upper bound on the scaling from pulling back the Euclidean metric on the rigid body members
+            # to the quaternion of the rigid body
+            # metric is equivalent to 4G, where G is the moment of inertia tensor
+            # bound corresponds to worst-case scenario of co-linear members
+            # TODO: recurse through nested rigid bodies
+            r = 2 * sigma
+        else: # fallback
+            r = 1.0
+        return r
+
+    def build(self, m, pi):
+        p = m.get_particle(pi)
+        kp_pairs = []
+        for fk in self.fks:
+            if not (m.get_has_attribute(fk, pi) and p.get_is_optimized(fk)):
+                return
+            kp_pairs.append((fk, pi))
+        n = len(kp_pairs)
+        r = self.compute_scaling(m, pi)
+        return kp_pairs, HMCUtilities.UnitVectorScaledConstraint(n, r)
+
+
 class WeightTransformationBuilder(TransformationBuilder):
     def build(self, m, pi):
         if not IMP.isd.Weight.get_is_setup(m, pi):
@@ -102,14 +137,14 @@ class OptimizedVariables(object):
         # XYZR radius
         RadiusTransformationBuilder(),
         # RigidBody quaternion
-        UnitVectorTransformationBuilder(
+        UnitVectorScaledTransformationBuilder(
             [
                 IMP.FloatKey("rigid_body_quaternion_{0}".format(i))
                 for i in range(4)
             ]
         ),
         # NonRigidMember local quaternion
-        UnitVectorTransformationBuilder(
+        UnitVectorScaledTransformationBuilder(
             [
                 IMP.FloatKey("rigid_body_local_quaternion_{0}".format(i))
                 for i in range(4)
