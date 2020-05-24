@@ -1,3 +1,4 @@
+import datetime
 from timeit import default_timer as timer
 
 from .julia import HMCUtilities, AdvancedHMC
@@ -73,11 +74,11 @@ class Adaptor(object):
                 per_eval = lap / nevals
                 eta = lap * (self.nadapt / (self.nadapt_counter + 1) - 1)
                 print(
-                    "Warmup step {0}/{1} ({2:.{4}g}s/eval  ETA: {3:.{4}g}s)".format(
+                    "Warmup step {0}/{1} ({2:.{4}g}s/eval  ETA: {3})".format(
                         self.nadapt_counter + 1,
                         self.nadapt,
                         per_eval,
-                        eta,
+                        datetime.timedelta(seconds=eta),
                         log_prec,
                     )
                 )
