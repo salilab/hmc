@@ -1,7 +1,7 @@
 import datetime
 from timeit import default_timer as timer
 
-from .julia import HMCUtilities, AdvancedHMC
+from .julia import Main, HMCUtilities, AdvancedHMC
 
 
 class Adaptor(object):
@@ -83,6 +83,9 @@ class Adaptor(object):
                     )
                 )
                 self.hmc.stats.log_mean()
+                print("Metric:\n    {0}".format(
+                    Main.eval("x -> getproperty(x, :(M⁻¹))")(self.hmc.hamiltonian.metric)
+                ))
 
         self.hmc.after_sample()
 
