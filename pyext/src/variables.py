@@ -125,6 +125,31 @@ class NuisanceTransformationBuilder(TransformationBuilder):
         )
 
 
+class BoundingBoxTransformationBuilder(TransformationBuilder):
+    
+    """
+    Transformation that smoothly constrains the variables within the provided bounding box
+    """
+
+    def __init__(self, fks, bbox):
+        self.bbox = bbox
+        self.fks = fks
+
+    def build(self, m, pi):
+        lb, ub = IMP.algebra.get_vertices(self.bbox)
+        p = m.get_particle(pi)
+        kp_pairs = []
+        constraints = []
+        for i, fk in enumerate(self.fks):
+            if not (m.get_has_attribute(fk, pi) and p.get_is_optimized(fk)):
+                return
+            c = HMCUtilities.BoundedConstraint(lb[i], ub[i])
+            constraints.append(c)
+            kp_pairs.append((fk, pi))
+        joint_constraint = HMCUtilities.JointConstraint(*constraints)
+        return kp_pairs, joint_constraint
+
+
 class OptimizedVariables(object):
 
     transform_builders = [
