@@ -136,7 +136,8 @@ class BoundingBoxTransformationBuilder(TransformationBuilder):
         self.fks = fks
 
     def build(self, m, pi):
-        lb, ub = IMP.algebra.get_vertices(self.bbox)
+        lb = self.bbox.get_corner(0)
+        ub = self.bbox.get_corner(1)
         p = m.get_particle(pi)
         kp_pairs = []
         constraints = []
