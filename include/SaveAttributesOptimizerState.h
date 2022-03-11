@@ -32,7 +32,7 @@ class IMPHMCEXPORT SaveAttributesOptimizerState : public OptimizerState {
   FloatsList get_values() const;
 
  protected:
-  virtual void do_update(unsigned int update_number) IMP_OVERRIDE;
+  virtual void do_update(unsigned int update_number) override;
 
   IMP_OBJECT_METHODS(SaveAttributesOptimizerState);
 };

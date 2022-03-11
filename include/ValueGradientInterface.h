@@ -42,9 +42,9 @@ class IMPHMCEXPORT ValueGradientInterface : public IMP::ModelObject {
 
   IMP::Vector<double> get_gradient() const;
 
-  virtual IMP::ModelObjectsTemp do_get_inputs() const IMP_OVERRIDE;
+  virtual IMP::ModelObjectsTemp do_get_inputs() const override;
 
-  virtual IMP::ModelObjectsTemp do_get_outputs() const IMP_OVERRIDE;
+  virtual IMP::ModelObjectsTemp do_get_outputs() const override;
 
  protected:
   IMP_OBJECT_METHODS(ValueGradientInterface);
